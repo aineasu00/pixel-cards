@@ -53,19 +53,13 @@ npm run preview
 
 ## Deploiement gratuit GitHub Pages
 
-Le projet contient un workflow GitHub Actions dans `.github/workflows/deploy-pages.yml`.
-
-1. Dans le depot GitHub, ajoute le secret `VITE_SUPABASE_ANON_KEY` avec la cle anon publique Supabase.
-2. Active GitHub Pages en source `GitHub Actions`.
-3. Pousse sur `main`.
-
-Option manuelle `gh-pages` :
+Le depot est configure pour servir la branche `gh-pages`, generee depuis `dist`.
 
 ```bash
 npm run deploy
 ```
 
-La config Vite utilise `base: './'` pour rester compatible avec GitHub Pages.
+La config Vite utilise `base: './'` pour rester compatible avec GitHub Pages. Le build utilise les variables Supabase du fichier `.env` local.
 
 ## Regles V0
 
