@@ -1,5 +1,6 @@
 node_modules
 dist
+.publish-gh-pages
 .env
 .env.local
 .env.*.local
