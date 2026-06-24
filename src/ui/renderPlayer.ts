@@ -1,4 +1,4 @@
-import { cardLabel, isPlayable, playableCards } from '../game/rules';
+import { cardLabel, playableCards } from '../game/rules';
 import type { Card, CardColor, NetworkStatus, PlayerPrivateState, PublicGameState } from '../game/types';
 
 export interface PlayerRenderOptions {
@@ -19,7 +19,7 @@ export interface PlayerRenderOptions {
 }
 
 export function renderPlayer(options: PlayerRenderOptions): void {
-  const { app, state, privateState } = options;
+  const { app, state } = options;
   if (!options.name || !state || state.phase === 'lobby') {
     app.innerHTML = !options.name ? joinMarkup(options) : lobbyMarkup(options);
   } else {
@@ -52,9 +52,10 @@ function bind(options: PlayerRenderOptions): void {
 function joinMarkup(options: PlayerRenderOptions): string {
   return `
     <main class="phone-shell join-phone">
-      <img src="./assets/mascot.png" class="mascot-mini" alt="Mascotte Pixel Cards" />
-      <p class="eyebrow">Room ${options.roomCode}</p>
-      <h1>Rejoindre Pixel Cards</h1>
+      <img src="./assets/mascot.png" class="mascot-badge" alt="Mascotte Pixel Card" />
+      <p class="eyebrow">Salle ${options.roomCode}</p>
+      <h1>Pixel Card</h1>
+      <p class="phone-subtitle">Entre ton pseudo pour rejoindre la table.</p>
       <form data-join-form class="join-form">
         <input name="name" maxlength="18" autocomplete="nickname" placeholder="Ton pseudo" required />
         <button class="primary-btn" type="submit">Rejoindre</button>
@@ -70,17 +71,18 @@ function lobbyMarkup(options: PlayerRenderOptions): string {
     <main class="phone-shell">
       <header class="phone-header">
         <div>
-          <p class="eyebrow">Room ${options.roomCode}</p>
+          <p class="eyebrow">Salle ${options.roomCode}</p>
           <h1>${escapeHtml(options.name)}</h1>
         </div>
+        <img src="./assets/mascot.png" class="phone-mascot" alt="" />
         ${networkBadge(options.network)}
       </header>
-      <section class="status-card">
-        <strong>${current?.ready ? 'Prêt' : 'En attente'}</strong>
-        <span>${options.state?.players.length ?? 0}/9 joueurs connectés</span>
+      <section class="status-card panel-rise">
+        <strong>${current?.ready ? 'Pret' : 'En attente'}</strong>
+        <span>${options.state?.players.length ?? 0}/9 joueurs connectes</span>
       </section>
-      <button class="primary-btn" data-action="ready">${current?.ready ? 'Annuler prêt' : 'Je suis prêt'}</button>
-      <p class="hint">La partie démarre depuis la tablette.</p>
+      <button class="primary-btn" data-action="ready">${current?.ready ? 'Annuler pret' : 'Je suis pret'}</button>
+      <p class="hint">La partie demarre depuis la tablette.</p>
     </main>
   `;
 }
@@ -99,14 +101,17 @@ function handMarkup(options: PlayerRenderOptions): string {
     <main class="phone-shell game-phone">
       <header class="phone-header">
         <div>
-          <p class="eyebrow">${state.phase === 'game-over' ? 'Partie terminée' : isTurn ? "C'est ton tour" : `Tour de ${escapeHtml(active?.name ?? '-')}`}</p>
+          <p class="eyebrow">${state.phase === 'game-over' ? 'Partie terminee' : isTurn ? "C'est ton tour" : `Tour de ${escapeHtml(active?.name ?? '-')}`}</p>
           <h1>${state.phase === 'game-over' ? `${escapeHtml(winner?.name ?? 'Joueur')} gagne` : escapeHtml(options.name)}</h1>
         </div>
         ${networkBadge(options.network)}
       </header>
-      <section class="phone-center">
+      <section class="phone-center panel-rise ${isTurn ? 'is-turn' : ''}">
         ${miniCard(state.discardTop)}
-        <div class="phone-timer" data-phone-timer>50</div>
+        <div class="phone-timer-wrap" data-phone-timer-wrap style="--progress:100%">
+          <div class="phone-timer" data-phone-timer>00:50</div>
+          <small>${isTurn ? 'ton tour' : 'attente'}</small>
+        </div>
       </section>
       ${options.error ? `<p class="error-line">${escapeHtml(options.error)}</p>` : ''}
       <section class="hand-grid">
@@ -128,30 +133,53 @@ function handMarkup(options: PlayerRenderOptions): string {
 
 export function updatePhoneTimer(publicState?: PublicGameState): void {
   const timer = document.querySelector<HTMLElement>('[data-phone-timer]');
+  const wrap = document.querySelector<HTMLElement>('[data-phone-timer-wrap]');
   if (!timer || !publicState?.turn || publicState.phase !== 'playing') return;
   const remaining = Math.max(0, publicState.turn.durationMs - (Date.now() - publicState.turn.startedAt));
-  timer.textContent = `${Math.ceil(remaining / 1000)}s`;
-  timer.classList.toggle('danger', remaining < 10_000);
+  const seconds = Math.ceil(remaining / 1000);
+  timer.textContent = `00:${String(seconds).padStart(2, '0')}`;
+  const progress = Math.max(0, Math.min(100, (remaining / publicState.turn.durationMs) * 100));
+  wrap?.style.setProperty('--progress', `${progress}%`);
+  wrap?.classList.toggle('warning', remaining < 15_000);
+  wrap?.classList.toggle('danger', remaining < 5_000);
 }
 
 function cardButton(card: Card, enabled: boolean, pending: boolean): string {
   return `
-    <button class="hand-card ${card.color} ${enabled ? 'playable' : 'disabled'} ${pending ? 'pending' : ''}" data-card-id="${card.id}" ${enabled && !pending ? '' : 'disabled'}>
+    <button class="hand-card ${card.color} ${card.kind} ${enabled ? 'playable' : 'disabled'} ${pending ? 'pending' : ''}" data-card-id="${card.id}" ${enabled && !pending ? '' : 'disabled'}>
+      <i>${cardCorner(card)}</i>
       <span>${card.kind === 'wild' ? 'joker' : card.color}</span>
       <strong>${cardLabel(card)}</strong>
+      <small>${actionName(card)}</small>
       ${pending ? '<em>validation...</em>' : ''}
     </button>
   `;
 }
 
 function miniCard(card?: Card): string {
-  if (!card) return '<div class="mini-card neutral"><strong>-</strong></div>';
-  return `<div class="mini-card ${card.color}"><span>Défausse</span><strong>${cardLabel(card)}</strong></div>`;
+  if (!card) return '<div class="mini-card neutral"><span>Defausse</span><strong>-</strong></div>';
+  return `<div class="mini-card ${card.color} ${card.kind}"><span>Defausse</span><strong>${cardLabel(card)}</strong><small>${actionName(card)}</small></div>`;
 }
 
 function networkBadge(status: NetworkStatus): string {
-  const label = status === 'connected' ? 'connecté' : status === 'local' ? 'demo local' : status === 'reconnecting' ? 'reconnexion' : 'déconnecté';
+  const label = status === 'connected' ? 'connecte' : status === 'local' ? 'demo local' : status === 'reconnecting' ? 'reconnexion' : 'deconnecte';
   return `<span class="net ${status}"><i></i>${label}</span>`;
+}
+
+function cardCorner(card: Card): string {
+  if (card.kind === 'draw2') return '+2';
+  if (card.kind === 'skip') return 'STOP';
+  if (card.kind === 'reverse') return 'REV';
+  if (card.kind === 'wild') return 'PC';
+  return String(card.value ?? '');
+}
+
+function actionName(card: Card): string {
+  if (card.kind === 'draw2') return 'Pioche 2';
+  if (card.kind === 'skip') return 'Passer';
+  if (card.kind === 'reverse') return 'Inverser';
+  if (card.kind === 'wild') return 'Au choix';
+  return 'Nombre';
 }
 
 function escapeHtml(value: string): string {
