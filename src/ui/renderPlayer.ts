@@ -1,6 +1,13 @@
 import { cardLabel, playableCards } from '../game/rules';
 import type { Card, CardColor, NetworkStatus, PlayerPrivateState, PublicGameState } from '../game/types';
 
+const mascot = {
+  lobby: './assets/mascot/mascot-waving.png',
+  phone: './assets/mascot/mascot-small.png',
+  waiting: './assets/mascot/mascot-idle.png',
+  victory: './assets/mascot/mascot-victory.png',
+};
+
 export interface PlayerRenderOptions {
   app: HTMLElement;
   roomCode: string;
@@ -52,7 +59,7 @@ function bind(options: PlayerRenderOptions): void {
 function joinMarkup(options: PlayerRenderOptions): string {
   return `
     <main class="phone-shell join-phone">
-      <img src="./assets/mascot.png" class="mascot-badge" alt="Mascotte Pixel Card" />
+      <img src="${mascot.lobby}" class="mascot mascot--phone mascot-badge" alt="Mascotte Pixel Card" />
       <p class="eyebrow">Salle ${options.roomCode}</p>
       <h1>Pixel Card</h1>
       <p class="phone-subtitle">Entre ton pseudo pour rejoindre la table.</p>
@@ -74,7 +81,7 @@ function lobbyMarkup(options: PlayerRenderOptions): string {
           <p class="eyebrow">Salle ${options.roomCode}</p>
           <h1>${escapeHtml(options.name)}</h1>
         </div>
-        <img src="./assets/mascot.png" class="phone-mascot" alt="" />
+        <img src="${mascot.phone}" class="mascot mascot--phone phone-mascot" alt="" />
         ${networkBadge(options.network)}
       </header>
       <section class="status-card panel-rise">
@@ -106,10 +113,11 @@ function handMarkup(options: PlayerRenderOptions): string {
         </div>
         ${networkBadge(options.network)}
       </header>
+      ${state.phase === 'game-over' ? `<div class="phone-waiting victory"><img src="${mascot.victory}" class="mascot mascot--victory" alt="" /><span>Partie terminee</span></div>` : !isTurn ? `<div class="phone-waiting"><img src="${mascot.waiting}" class="mascot mascot--phone" alt="" /><span>En attente de ton tour</span></div>` : ''}
       <section class="phone-center panel-rise ${isTurn ? 'is-turn' : ''}">
         ${miniCard(state.discardTop)}
-        <div class="phone-timer-wrap" data-phone-timer-wrap style="--progress:100%">
-          <div class="phone-timer" data-phone-timer>00:50</div>
+        <div class="phone-timer-wrap timer--normal" data-phone-timer-wrap style="--progress:100%; --timer-progress:360deg">
+          <div class="phone-timer" data-phone-timer>50</div>
           <small>${isTurn ? 'ton tour' : 'attente'}</small>
         </div>
       </section>
@@ -132,33 +140,39 @@ function handMarkup(options: PlayerRenderOptions): string {
 }
 
 export function updatePhoneTimer(publicState?: PublicGameState): void {
-  const timer = document.querySelector<HTMLElement>('[data-phone-timer]');
-  const wrap = document.querySelector<HTMLElement>('[data-phone-timer-wrap]');
-  if (!timer || !publicState?.turn || publicState.phase !== 'playing') return;
+  const value = document.querySelector<HTMLElement>('[data-phone-timer]');
+  const timer = document.querySelector<HTMLElement>('[data-phone-timer-wrap]');
+  if (!value || !timer || !publicState?.turn || publicState.phase !== 'playing') return;
   const remaining = Math.max(0, publicState.turn.durationMs - (Date.now() - publicState.turn.startedAt));
   const seconds = Math.ceil(remaining / 1000);
-  timer.textContent = `00:${String(seconds).padStart(2, '0')}`;
   const progress = Math.max(0, Math.min(100, (remaining / publicState.turn.durationMs) * 100));
-  wrap?.style.setProperty('--progress', `${progress}%`);
-  wrap?.classList.toggle('warning', remaining < 15_000);
-  wrap?.classList.toggle('danger', remaining < 5_000);
+  value.textContent = String(seconds);
+  timer.style.setProperty('--progress', `${progress}%`);
+  timer.style.setProperty('--timer-progress', `${progress * 3.6}deg`);
+  timer.classList.toggle('timer--normal', remaining >= 15_000);
+  timer.classList.toggle('timer--warning', remaining < 15_000 && remaining >= 5_000);
+  timer.classList.toggle('timer--danger', remaining < 5_000 && remaining > 0);
+  timer.classList.toggle('timer--expired', remaining === 0);
 }
 
 function cardButton(card: Card, enabled: boolean, pending: boolean): string {
   return `
-    <button class="hand-card ${card.color} ${card.kind} ${enabled ? 'playable' : 'disabled'} ${pending ? 'pending' : ''}" data-card-id="${card.id}" ${enabled && !pending ? '' : 'disabled'}>
-      <i>${cardCorner(card)}</i>
-      <span>${card.kind === 'wild' ? 'joker' : card.color}</span>
+    <button class="hand-card card-ui ${card.color} ${card.kind} ${enabled ? 'playable' : 'disabled'} ${pending ? 'pending' : ''}" data-card-id="${card.id}" ${enabled && !pending ? '' : 'disabled'}>
+      <span class="card-corner card-corner--top">${cardCorner(card)}</span>
+      <span class="card-corner card-corner--bottom">${cardCorner(card)}</span>
+      <span class="card-color">${card.kind === 'wild' ? 'joker' : card.color}</span>
+      <span class="card-icon">${cardIcon(card)}</span>
       <strong>${cardLabel(card)}</strong>
-      <small>${actionName(card)}</small>
+      <small class="card-label">${actionName(card)}</small>
+      ${enabled ? '<b class="playable-badge">Jouable</b>' : ''}
       ${pending ? '<em>validation...</em>' : ''}
     </button>
   `;
 }
 
 function miniCard(card?: Card): string {
-  if (!card) return '<div class="mini-card neutral"><span>Defausse</span><strong>-</strong></div>';
-  return `<div class="mini-card ${card.color} ${card.kind}"><span>Defausse</span><strong>${cardLabel(card)}</strong><small>${actionName(card)}</small></div>`;
+  if (!card) return '<div class="mini-card card-ui neutral"><span class="card-label">Defausse</span><strong>-</strong></div>';
+  return `<div class="mini-card card-ui ${card.color} ${card.kind}"><span class="card-color">Defausse</span><span class="card-icon">${cardIcon(card)}</span><strong>${cardLabel(card)}</strong><small class="card-label">${actionName(card)}</small></div>`;
 }
 
 function networkBadge(status: NetworkStatus): string {
@@ -168,18 +182,26 @@ function networkBadge(status: NetworkStatus): string {
 
 function cardCorner(card: Card): string {
   if (card.kind === 'draw2') return '+2';
-  if (card.kind === 'skip') return 'STOP';
-  if (card.kind === 'reverse') return 'REV';
+  if (card.kind === 'skip') return 'Ø';
+  if (card.kind === 'reverse') return '↻';
   if (card.kind === 'wild') return 'PC';
   return String(card.value ?? '');
 }
 
 function actionName(card: Card): string {
   if (card.kind === 'draw2') return 'Pioche 2';
-  if (card.kind === 'skip') return 'Passer';
-  if (card.kind === 'reverse') return 'Inverser';
+  if (card.kind === 'skip') return 'Passe';
+  if (card.kind === 'reverse') return 'Inverse';
   if (card.kind === 'wild') return 'Au choix';
   return 'Nombre';
+}
+
+function cardIcon(card: Card): string {
+  if (card.kind === 'draw2') return '▰▰';
+  if (card.kind === 'skip') return '⊘';
+  if (card.kind === 'reverse') return '↻';
+  if (card.kind === 'wild') return '✦';
+  return String(card.value ?? '');
 }
 
 function escapeHtml(value: string): string {

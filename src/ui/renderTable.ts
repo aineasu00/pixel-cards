@@ -2,6 +2,12 @@ import QRCode from 'qrcode';
 import { cardLabel, colorLabel } from '../game/rules';
 import type { Card, NetworkStatus, PublicGameState } from '../game/types';
 
+const mascot = {
+  lobby: './assets/mascot/mascot-waving.png',
+  watermark: './assets/mascot/mascot-pointing.png',
+  victory: './assets/mascot/mascot-victory.png',
+};
+
 export interface TableRenderOptions {
   app: HTMLElement;
   state: PublicGameState;
@@ -14,10 +20,8 @@ export interface TableRenderOptions {
 export async function renderTable(options: TableRenderOptions): Promise<void> {
   const { app, state, joinUrl, network } = options;
   app.innerHTML = state.phase === 'lobby' ? lobbyMarkup(state, network) : tableMarkup(state, network);
-
   app.querySelector<HTMLButtonElement>('[data-action="start"]')?.addEventListener('click', options.onStart);
   app.querySelector<HTMLButtonElement>('[data-action="new-game"]')?.addEventListener('click', options.onNewGame);
-
   const canvas = app.querySelector<HTMLCanvasElement>('#qr');
   if (canvas) await QRCode.toCanvas(canvas, joinUrl, { width: 236, margin: 1, color: { dark: '#0b0d11', light: '#f5f1e6' } });
 }
@@ -29,7 +33,7 @@ function lobbyMarkup(state: PublicGameState, network: NetworkStatus): string {
       <section class="hero-panel panel-rise">
         <div class="hero-light"></div>
         <div class="brand-row">
-          <img src="./assets/mascot.png" class="mascot-lobby" alt="Mascotte Pixel Card" />
+          <img src="${mascot.lobby}" class="mascot mascot--lobby" alt="Mascotte Pixel Card" />
           <div>
             <p class="eyebrow">Arcade lounge</p>
             <h1>Pixel Card</h1>
@@ -50,7 +54,7 @@ function lobbyMarkup(state: PublicGameState, network: NetworkStatus): string {
         </div>
         <div class="lobby-actions">
           <button class="primary-btn" data-action="start" ${canStart ? '' : 'disabled'}>Lancer la partie</button>
-          <span>2 joueurs minimum · 9 max</span>
+          <span>${canStart ? 'Pret a jouer · 9 max' : 'En attente de 2 joueurs minimum'}</span>
         </div>
       </section>
       <section class="players-panel panel-rise">
@@ -65,7 +69,7 @@ function lobbyMarkup(state: PublicGameState, network: NetworkStatus): string {
               <strong>${escapeHtml(player.name)}</strong>
               <small>${player.ready ? 'pret' : 'en attente'} · ${player.connected ? 'connecte' : 'hors ligne'}</small>
             </div>
-          `).join('') || '<p class="empty">En attente des joueurs.</p>'}
+          `).join('') || '<div class="empty-state"><span class="pixel-mark">PC</span><p>Scannez le QR code pour rejoindre la partie.</p></div>'}
         </div>
       </section>
     </main>
@@ -82,14 +86,14 @@ function tableMarkup(state: PublicGameState, network: NetworkStatus): string {
           <p class="eyebrow">Salle ${state.roomCode}</p>
           <h1>${state.phase === 'game-over' ? `Victoire ${escapeHtml(winner?.name ?? 'joueur')}` : `Tour ${escapeHtml(active?.name ?? '-')}`}</h1>
         </div>
-        ${timerMarkup(state)}
+        ${timerMarkup(state, active?.name ?? '-')}
         <div class="topbar-actions">
           ${networkBadge(network)}
           <button class="ghost-btn" data-action="new-game">Nouvelle partie</button>
         </div>
       </header>
       <section class="felt">
-        <img src="./assets/mascot.png" class="mascot-watermark" alt="" />
+        <img src="${state.phase === 'game-over' ? mascot.victory : mascot.watermark}" class="mascot mascot--watermark ${state.phase === 'game-over' ? 'mascot--victory' : ''}" alt="" />
         <div class="felt-lines"></div>
         <div class="hands-ring">
           ${state.players.map((player, index) => playerSeat(player.name, player.handCount, player.id === state.turn?.activePlayerId, index, state.players.length)).join('')}
@@ -124,40 +128,52 @@ function playerSeat(name: string, count: number, active: boolean, index: number,
 }
 
 function cardMarkup(card?: PublicGameState['discardTop']): string {
-  if (!card) return '<div class="play-card neutral"><span>Defausse</span><strong>-</strong></div>';
+  if (!card) return '<div class="play-card card-ui neutral"><span class="card-label">Defausse</span><strong>-</strong></div>';
   return `
-    <div class="play-card ${card.color} ${card.kind}">
-      <i>${cardCorner(card)}</i>
-      <span>${colorLabel(card.color)}</span>
+    <div class="play-card card-ui ${card.color} ${card.kind}">
+      <span class="card-corner card-corner--top">${cardCorner(card)}</span>
+      <span class="card-corner card-corner--bottom">${cardCorner(card)}</span>
+      <span class="card-color">${colorLabel(card.color)}</span>
+      <span class="card-icon">${cardIcon(card)}</span>
       <strong>${cardLabel(card)}</strong>
-      <small>${actionName(card)}</small>
+      <small class="card-label">${actionName(card)}</small>
     </div>
   `;
 }
 
-function timerMarkup(state: PublicGameState): string {
-  const value = state.phase === 'playing' ? '00:50' : '00:00';
+function timerMarkup(state: PublicGameState, activeName: string): string {
+  const value = state.phase === 'playing' ? '50' : '0';
   return `
-    <div class="timer-ring" data-timer-wrap style="--progress:100%">
-      <div class="timer-core">
-        <span class="timer" data-timer>${value}</span>
-        <small>secondes</small>
+    <div class="timer timer--normal" data-timer-wrap style="--timer-progress:360deg; --progress:100%">
+      <div class="timer__player">${escapeHtml(activeName)}</div>
+      <div class="timer__ring">
+        <div class="timer__core">
+          <span class="timer__value" data-timer>${value}</span>
+          <small class="timer__label">secondes</small>
+        </div>
       </div>
+      <div class="timer__status">Tour en cours</div>
+      <div class="timer__bar"><span></span></div>
     </div>
   `;
 }
 
 export function updateTimer(publicState: PublicGameState): void {
-  const timer = document.querySelector<HTMLElement>('[data-timer]');
-  const wrap = document.querySelector<HTMLElement>('[data-timer-wrap]');
-  if (!timer || publicState.phase !== 'playing' || !publicState.turn) return;
+  const value = document.querySelector<HTMLElement>('[data-timer]');
+  const timer = document.querySelector<HTMLElement>('[data-timer-wrap]');
+  if (!value || !timer || publicState.phase !== 'playing' || !publicState.turn) return;
   const remaining = Math.max(0, publicState.turn.durationMs - (Date.now() - publicState.turn.startedAt));
   const seconds = Math.ceil(remaining / 1000);
-  timer.textContent = `00:${String(seconds).padStart(2, '0')}`;
   const progress = Math.max(0, Math.min(100, (remaining / publicState.turn.durationMs) * 100));
-  wrap?.style.setProperty('--progress', `${progress}%`);
-  wrap?.classList.toggle('warning', remaining < 15_000);
-  wrap?.classList.toggle('danger', remaining < 5_000);
+  value.textContent = String(seconds);
+  timer.style.setProperty('--progress', `${progress}%`);
+  timer.style.setProperty('--timer-progress', `${progress * 3.6}deg`);
+  timer.classList.toggle('timer--normal', remaining >= 15_000);
+  timer.classList.toggle('timer--warning', remaining < 15_000 && remaining >= 5_000);
+  timer.classList.toggle('timer--danger', remaining < 5_000 && remaining > 0);
+  timer.classList.toggle('timer--expired', remaining === 0);
+  const status = timer.querySelector<HTMLElement>('.timer__status');
+  if (status) status.textContent = remaining === 0 ? 'Temps ecoule' : remaining < 5_000 ? 'Derniere chance' : remaining < 15_000 ? 'Attention' : 'Tour en cours';
 }
 
 function networkBadge(status: NetworkStatus): string {
@@ -167,18 +183,26 @@ function networkBadge(status: NetworkStatus): string {
 
 function cardCorner(card: Card): string {
   if (card.kind === 'draw2') return '+2';
-  if (card.kind === 'skip') return 'STOP';
-  if (card.kind === 'reverse') return 'REV';
+  if (card.kind === 'skip') return 'Ø';
+  if (card.kind === 'reverse') return '↻';
   if (card.kind === 'wild') return 'PC';
   return String(card.value ?? '');
 }
 
 function actionName(card: Card): string {
   if (card.kind === 'draw2') return 'Pioche 2';
-  if (card.kind === 'skip') return 'Passer';
-  if (card.kind === 'reverse') return 'Inverser';
+  if (card.kind === 'skip') return 'Passe';
+  if (card.kind === 'reverse') return 'Inverse';
   if (card.kind === 'wild') return 'Au choix';
   return 'Nombre';
+}
+
+function cardIcon(card: Card): string {
+  if (card.kind === 'draw2') return '▰▰';
+  if (card.kind === 'skip') return '⊘';
+  if (card.kind === 'reverse') return '↻';
+  if (card.kind === 'wild') return '✦';
+  return String(card.value ?? '');
 }
 
 function escapeHtml(value: string): string {

@@ -61,16 +61,6 @@
   gap: 18px;
 }
 
-.mascot-lobby {
-  width: clamp(110px, 13vw, 176px);
-  height: clamp(110px, 13vw, 176px);
-  object-fit: cover;
-  border: 1px solid rgba(245, 241, 230, 0.18);
-  border-radius: 28px;
-  background: var(--glass-strong);
-  box-shadow: var(--glow-magenta), 0 18px 42px rgba(0,0,0,0.42);
-}
-
 .brand-row h1 {
   margin: 0;
   font-size: clamp(4.4rem, 10vw, 9.4rem);
@@ -162,6 +152,19 @@
   margin-top: 22px;
 }
 
+.empty-state {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  min-height: 190px;
+  padding: 24px;
+  border: 1px dashed rgba(245, 241, 230, 0.18);
+  border-radius: 20px;
+  color: var(--text-soft);
+  text-align: center;
+  background: rgba(11, 13, 17, 0.42);
+}
+
 .player-row {
   display: grid;
   grid-template-columns: 48px 1fr;
@@ -227,20 +230,42 @@
   gap: 12px;
 }
 
-.timer-ring {
+.timer {
   --progress: 100%;
+  --timer-progress: 360deg;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: clamp(174px, 17vw, 238px);
+}
+
+.timer__player {
+  max-width: 220px;
+  padding: 5px 14px;
+  border: 1px solid rgba(245, 241, 230, 0.16);
+  border-radius: 999px;
+  color: var(--cream);
+  background: rgba(11, 13, 17, 0.76);
+  font-weight: 950;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timer__ring {
   display: grid;
   place-items: center;
-  width: clamp(132px, 13vw, 176px);
+  width: clamp(148px, 14vw, 204px);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
-    conic-gradient(var(--cyan) 0 var(--progress), rgba(255,45,139,0.22) var(--progress) 100%),
+    conic-gradient(var(--timer-color, var(--cyan)) 0 var(--timer-progress), rgba(245,241,230,0.1) var(--timer-progress) 360deg),
     radial-gradient(circle, rgba(122,53,255,0.22), transparent 60%);
   box-shadow: var(--glow-cyan), var(--glow-magenta);
 }
 
-.timer-core {
+.timer__core {
   display: grid;
   place-items: center;
   width: 78%;
@@ -250,15 +275,15 @@
   background: radial-gradient(circle at 50% 20%, rgba(245,241,230,0.08), transparent 28%), #0b0d11;
 }
 
-.timer {
+.timer__value {
   color: var(--cream);
   font-family: var(--font-timer);
-  font-size: clamp(1.9rem, 3.2vw, 3rem);
+  font-size: clamp(4.2rem, 7vw, 6.8rem);
   font-weight: 900;
   line-height: 1;
 }
 
-.timer-core small {
+.timer__label {
   color: var(--text-soft);
   font-size: 0.66rem;
   font-weight: 900;
@@ -266,13 +291,41 @@
   text-transform: uppercase;
 }
 
-.timer-ring.warning {
-  background: conic-gradient(var(--magenta) 0 var(--progress), rgba(122,53,255,0.26) var(--progress) 100%);
+.timer__status {
+  color: var(--timer-color, var(--cyan));
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.timer__bar {
+  width: min(220px, 16vw);
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(245, 241, 230, 0.1);
+}
+
+.timer__bar span {
+  display: block;
+  width: var(--progress);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--timer-color, var(--cyan));
+  transition: width 220ms linear, background 160ms ease;
+}
+
+.timer--normal { --timer-color: var(--cyan); }
+
+.timer--warning {
+  --timer-color: var(--magenta);
   box-shadow: var(--glow-magenta);
 }
 
-.timer-ring.danger {
-  background: conic-gradient(var(--red) 0 var(--progress), rgba(255,59,59,0.16) var(--progress) 100%);
+.timer--danger,
+.timer--expired {
+  --timer-color: var(--red);
   animation: timer-pulse 900ms ease-in-out infinite;
 }
 
@@ -303,6 +356,19 @@
   width: min(31vw, 390px);
   opacity: 0.12;
   filter: saturate(0.85) contrast(1.1);
+}
+
+.mascot--watermark {
+  position: absolute;
+  right: 7%;
+  bottom: -6%;
+  width: min(31vw, 390px);
+  z-index: 0;
+}
+
+.mascot--victory {
+  opacity: 0.42;
+  width: min(36vw, 460px);
 }
 
 .hands-ring {
@@ -384,6 +450,7 @@
   top: 50%;
   display: flex;
   align-items: center;
+  z-index: 2;
   gap: clamp(18px, 3vw, 30px);
   transform: translate(-50%, -50%);
 }
@@ -391,8 +458,8 @@
 .pile, .play-card {
   display: grid;
   place-items: center;
-  width: clamp(128px, 11vw, 158px);
-  height: clamp(178px, 15vw, 216px);
+  width: clamp(150px, 12vw, 180px);
+  height: clamp(210px, 17vw, 252px);
   border-radius: 22px;
 }
 

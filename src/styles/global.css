@@ -272,3 +272,175 @@ h1, h2 {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.025); }
 }
+
+/* Mascot assets are transparent PNG sprites generated from the dedicated Mascote sheet. */
+.mascot {
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mascot--lobby {
+  width: clamp(128px, 15vw, 210px);
+  height: clamp(128px, 15vw, 210px);
+  filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.5));
+}
+
+.mascot--watermark {
+  opacity: 0.09;
+  filter: saturate(0.85) contrast(1.08);
+}
+
+.mascot--phone {
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.42));
+}
+
+.mascot--card-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.mascot--victory {
+  opacity: 0.95;
+  animation: mascot-celebrate 1100ms ease-in-out infinite;
+}
+
+.card-ui {
+  --card-accent: var(--cyan);
+  --card-accent-soft: rgba(0, 229, 255, 0.18);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  place-items: center;
+  padding: 16px 14px 14px;
+  border-width: 2px;
+  background:
+    linear-gradient(90deg, var(--card-accent) 0 8px, transparent 8px),
+    radial-gradient(circle at 50% 45%, var(--card-accent-soft), transparent 42%),
+    linear-gradient(155deg, rgba(245, 241, 230, 0.08), rgba(11, 13, 17, 0.96));
+}
+
+.card-ui.red {
+  --card-accent: var(--magenta);
+  --card-accent-soft: rgba(255, 45, 139, 0.22);
+}
+
+.card-ui.blue {
+  --card-accent: var(--cyan);
+  --card-accent-soft: rgba(0, 229, 255, 0.2);
+}
+
+.card-ui.green {
+  --card-accent: var(--violet);
+  --card-accent-soft: rgba(122, 53, 255, 0.22);
+}
+
+.card-ui.yellow {
+  --card-accent: #ffd166;
+  --card-accent-soft: rgba(216, 180, 123, 0.28);
+}
+
+.card-ui.wild {
+  --card-accent: var(--cream);
+  --card-accent-soft: rgba(255, 45, 139, 0.22);
+  background:
+    linear-gradient(90deg, var(--cyan) 0 6px, var(--magenta) 6px 12px, var(--violet) 12px 18px, var(--wood) 18px 24px, transparent 24px),
+    radial-gradient(circle at 50% 44%, rgba(245, 241, 230, 0.16), transparent 34%),
+    linear-gradient(155deg, #171a22, #05070a);
+}
+
+.card-ui .card-corner {
+  position: absolute;
+  z-index: 2;
+  min-width: 34px;
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  color: #071014;
+  background: var(--card-accent);
+  border-radius: 9px;
+  font-family: var(--font-timer);
+  font-size: 0.9rem;
+  font-weight: 900;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--card-accent) 38%, transparent);
+}
+
+.card-ui .card-corner--top {
+  left: 12px;
+  top: 12px;
+}
+
+.card-ui .card-corner--bottom {
+  right: 12px;
+  bottom: 12px;
+  transform: rotate(180deg);
+}
+
+.card-ui .card-color {
+  justify-self: end;
+  max-width: calc(100% - 48px);
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card-ui .card-icon {
+  margin-top: 18px;
+  color: var(--card-accent);
+  font-family: var(--font-title);
+  font-size: clamp(2.1rem, 5vw, 4.4rem);
+  font-weight: 900;
+  line-height: 0.8;
+  text-shadow: 0 0 20px color-mix(in srgb, var(--card-accent) 44%, transparent);
+}
+
+.card-ui strong {
+  color: var(--cream);
+  font-size: clamp(3.6rem, 7vw, 6rem);
+  text-shadow: 0 0 18px rgba(245, 241, 230, 0.18);
+}
+
+.card-ui.number .card-icon {
+  display: none;
+}
+
+.card-ui.number strong {
+  color: var(--card-accent);
+  font-size: clamp(4.8rem, 8vw, 7.4rem);
+}
+
+.card-ui .card-label {
+  align-self: end;
+  margin-bottom: 24px;
+  padding: 5px 9px;
+  color: #0b0d11;
+  background: var(--cream);
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.playable-badge {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  z-index: 3;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #071014;
+  background: var(--cyan);
+  font-size: 0.58rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+@keyframes mascot-celebrate {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}
