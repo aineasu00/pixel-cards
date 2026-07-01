@@ -1,4 +1,5 @@
-import { cardLabel, playableCards } from '../game/rules';
+import { getCardAlt, getCardImagePath } from '../game/cardAssets';
+import { cardLabel, colorLabel, playableCards } from '../game/rules';
 import type { Card, CardColor, NetworkStatus, PlayerPrivateState, PublicGameState } from '../game/types';
 
 const mascot = {
@@ -50,7 +51,7 @@ function bind(options: PlayerRenderOptions): void {
     button.addEventListener('click', () => {
       const card = options.privateState?.hand.find((item) => item.id === button.dataset.cardId);
       if (!card) return;
-      const color = card.kind === 'wild' ? normalizeChosenColor(options.app.querySelector<HTMLSelectElement>('[data-color-choice]')?.value) : undefined;
+      const color = card.kind === 'wild' || card.kind === 'wildDraw4' ? normalizeChosenColor(options.app.querySelector<HTMLSelectElement>('[data-color-choice]')?.value) : undefined;
       options.onPlay(card, color);
     });
   });
@@ -128,9 +129,9 @@ function handMarkup(options: PlayerRenderOptions): string {
       <section class="phone-actions">
         <select data-color-choice aria-label="Couleur joker">
           <option value="blue">Bleu</option>
-          <option value="red">Rouge</option>
-          <option value="green">Vert</option>
-          <option value="yellow">Jaune</option>
+          <option value="red">Magenta</option>
+          <option value="green">Violette</option>
+          <option value="yellow">Or</option>
         </select>
         <button class="secondary-btn" data-action="draw" ${canDraw ? '' : 'disabled'}>Piocher</button>
         <button class="ghost-btn" data-action="pass" ${canPass ? '' : 'disabled'}>Passer</button>
@@ -157,13 +158,8 @@ export function updatePhoneTimer(publicState?: PublicGameState): void {
 
 function cardButton(card: Card, enabled: boolean, pending: boolean): string {
   return `
-    <button class="hand-card card-ui ${card.color} ${card.kind} ${enabled ? 'playable' : 'disabled'} ${pending ? 'pending' : ''}" data-card-id="${card.id}" ${enabled && !pending ? '' : 'disabled'}>
-      <span class="card-corner card-corner--top">${cardCorner(card)}</span>
-      <span class="card-corner card-corner--bottom">${cardCorner(card)}</span>
-      <span class="card-color">${card.kind === 'wild' ? 'joker' : card.color}</span>
-      <span class="card-icon">${cardIcon(card)}</span>
-      <strong>${cardLabel(card)}</strong>
-      <small class="card-label">${actionName(card)}</small>
+    <button class="hand-card ${enabled ? 'playable' : 'disabled'} ${pending ? 'pending' : ''}" data-card-id="${card.id}" aria-label="${getCardAlt(card)}" ${enabled && !pending ? '' : 'disabled'}>
+      <img class="game-card game-card--image ${enabled ? 'game-card--playable' : 'game-card--disabled'}" src="${getCardImagePath(card)}" alt="${getCardAlt(card)}" draggable="false" />
       ${enabled ? '<b class="playable-badge">Jouable</b>' : ''}
       ${pending ? '<em>validation...</em>' : ''}
     </button>
@@ -171,8 +167,13 @@ function cardButton(card: Card, enabled: boolean, pending: boolean): string {
 }
 
 function miniCard(card?: Card): string {
-  if (!card) return '<div class="mini-card card-ui neutral"><span class="card-label">Defausse</span><strong>-</strong></div>';
-  return `<div class="mini-card card-ui ${card.color} ${card.kind}"><span class="card-color">Defausse</span><span class="card-icon">${cardIcon(card)}</span><strong>${cardLabel(card)}</strong><small class="card-label">${actionName(card)}</small></div>`;
+  if (!card) return '<div class="mini-card mini-card--empty"><span>Defausse</span><strong>-</strong></div>';
+  return `
+    <figure class="mini-card">
+      <img class="game-card game-card--image" src="${getCardImagePath(card)}" alt="${getCardAlt(card)}" draggable="false" />
+      ${activeColorMarkup(card)}
+    </figure>
+  `;
 }
 
 function networkBadge(status: NetworkStatus): string {
@@ -180,28 +181,9 @@ function networkBadge(status: NetworkStatus): string {
   return `<span class="net ${status}"><i></i>${label}</span>`;
 }
 
-function cardCorner(card: Card): string {
-  if (card.kind === 'draw2') return '+2';
-  if (card.kind === 'skip') return 'Ø';
-  if (card.kind === 'reverse') return '↻';
-  if (card.kind === 'wild') return 'PC';
-  return String(card.value ?? '');
-}
-
-function actionName(card: Card): string {
-  if (card.kind === 'draw2') return 'Pioche 2';
-  if (card.kind === 'skip') return 'Passe';
-  if (card.kind === 'reverse') return 'Inverse';
-  if (card.kind === 'wild') return 'Au choix';
-  return 'Nombre';
-}
-
-function cardIcon(card: Card): string {
-  if (card.kind === 'draw2') return '▰▰';
-  if (card.kind === 'skip') return '⊘';
-  if (card.kind === 'reverse') return '↻';
-  if (card.kind === 'wild') return '✦';
-  return String(card.value ?? '');
+function activeColorMarkup(card: Card): string {
+  if (card.kind !== 'wild' && card.kind !== 'wildDraw4') return '';
+  return `<figcaption class="active-color active-color--phone">${cardLabel(card)} - couleur active : <strong>${colorLabel(card.color)}</strong></figcaption>`;
 }
 
 function escapeHtml(value: string): string {

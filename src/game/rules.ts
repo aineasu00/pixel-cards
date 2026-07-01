@@ -10,16 +10,17 @@ export function cardLabel(card?: Card): string {
   if (card.kind === 'draw2') return '+2';
   if (card.kind === 'skip') return 'skip';
   if (card.kind === 'reverse') return 'reverse';
+  if (card.kind === 'wildDraw4') return '+4';
   return 'wild';
 }
 
 export function colorLabel(color: CardColor): string {
-  return ({ red: 'rouge', blue: 'bleu', green: 'vert', yellow: 'jaune', wild: 'joker' })[color];
+  return ({ red: 'magenta', blue: 'bleu', green: 'violet', yellow: 'or', wild: 'joker' })[color];
 }
 
 export function isPlayable(card: Card, top?: Card): boolean {
   if (!top) return true;
-  if (card.kind === 'wild') return true;
+  if (card.kind === 'wild' || card.kind === 'wildDraw4') return true;
   if (card.color === top.color) return true;
   if (card.kind === top.kind && card.kind !== 'number') return true;
   return card.kind === 'number' && top.kind === 'number' && card.value === top.value;

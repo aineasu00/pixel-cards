@@ -1,0 +1,54 @@
+.game-card {
+  display: block;
+  width: var(--card-width);
+  max-width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.game-card::before,
+.game-card::after {
+  content: none;
+}
+
+.game-card--image {
+  filter: none;
+}
+
+.game-card--back {
+  filter: none;
+}
+
+.game-card--playable {
+  transform: translateY(-6px);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.35);
+}
+
+.game-card--disabled {
+  opacity: 0.45;
+  filter: grayscale(0.2) brightness(0.65);
+}
+
+.active-color {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(245, 241, 230, 0.14);
+  border-radius: 999px;
+  color: var(--text-soft);
+  background: rgba(11, 13, 17, 0.78);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.active-color strong {
+  color: var(--cyan);
+}

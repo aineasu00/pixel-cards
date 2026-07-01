@@ -1,4 +1,5 @@
 import './styles/global.css';
+import './styles/cards.css';
 import './styles/table.css';
 import { connectRoom } from './game/realtime';
 import { createInitialState, createRoomCode, addOrUpdatePlayer, setReady, startGame, getPublicState, privateStates, playCard, drawCardForPlayer, passTurn, handleTimeout } from './game/room';

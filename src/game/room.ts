@@ -60,7 +60,7 @@ export function startGame(state: GameState): boolean {
     player.handCount = state.hands[player.id].length;
   }
   let firstCard = drawOne(state);
-  while (firstCard?.kind === 'wild') {
+  while (firstCard?.kind === 'wild' || firstCard?.kind === 'wildDraw4') {
     state.deck.unshift(firstCard);
     firstCard = drawOne(state);
   }
@@ -99,7 +99,7 @@ export function playCard(state: GameState, playerId: string, cardId: string, cho
   if (!isPlayable(card, top)) return { ok: false, reason: 'Carte non jouable' };
 
   hand.splice(index, 1);
-  const played = card.kind === 'wild' ? { ...card, color: normalizeChosenColor(chosenColor) } : card;
+  const played = card.kind === 'wild' || card.kind === 'wildDraw4' ? { ...card, color: normalizeChosenColor(chosenColor) } : card;
   state.discard.push(played);
   const player = state.players.find((item) => item.id === playerId);
   if (player) {
@@ -174,6 +174,17 @@ function applyActionAndAdvance(state: GameState, playerId: string, card: Card): 
     const targetIndex = nextPlayerIndex(players, currentIndex, state.turn.direction, 1);
     const target = players[targetIndex];
     for (let i = 0; i < 2; i += 1) {
+      const drawn = drawOne(state);
+      if (drawn) state.hands[target.id].push(drawn);
+    }
+    target.handCount = state.hands[target.id].length;
+    advanceTurn(state, 2);
+    return;
+  }
+  if (card.kind === 'wildDraw4') {
+    const targetIndex = nextPlayerIndex(players, currentIndex, state.turn.direction, 1);
+    const target = players[targetIndex];
+    for (let i = 0; i < 4; i += 1) {
       const drawn = drawOne(state);
       if (drawn) state.hands[target.id].push(drawn);
     }

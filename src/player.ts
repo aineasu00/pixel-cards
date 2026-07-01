@@ -1,4 +1,5 @@
 import './styles/global.css';
+import './styles/cards.css';
 import './styles/player.css';
 import { connectRoom } from './game/realtime';
 import type { Card, CardColor, GameEvent, NetworkStatus, PlayerPrivateState, PublicGameState } from './game/types';

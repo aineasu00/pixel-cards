@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
-import { cardLabel, colorLabel } from '../game/rules';
+import { getCardAlt, getCardBackAlt, getCardBackImagePath, getCardImagePath } from '../game/cardAssets';
+import { colorLabel } from '../game/rules';
 import type { Card, NetworkStatus, PublicGameState } from '../game/types';
 
 const mascot = {
@@ -37,7 +38,7 @@ function lobbyMarkup(state: PublicGameState, network: NetworkStatus): string {
           <div>
             <p class="eyebrow">Arcade lounge</p>
             <h1>Pixel Card</h1>
-            <p class="subtitle">Jeu social premium · 50 sec / tour</p>
+            <p class="subtitle">Jeu social premium - 50 sec / tour</p>
           </div>
           ${networkBadge(network)}
         </div>
@@ -54,7 +55,7 @@ function lobbyMarkup(state: PublicGameState, network: NetworkStatus): string {
         </div>
         <div class="lobby-actions">
           <button class="primary-btn" data-action="start" ${canStart ? '' : 'disabled'}>Lancer la partie</button>
-          <span>${canStart ? 'Pret a jouer · 9 max' : 'En attente de 2 joueurs minimum'}</span>
+          <span>${canStart ? 'Pret a jouer - 9 max' : 'En attente de 2 joueurs minimum'}</span>
         </div>
       </section>
       <section class="players-panel panel-rise">
@@ -67,7 +68,7 @@ function lobbyMarkup(state: PublicGameState, network: NetworkStatus): string {
             <div class="player-row ${player.ready ? 'ready' : ''}">
               <span class="avatar">${index + 1}</span>
               <strong>${escapeHtml(player.name)}</strong>
-              <small>${player.ready ? 'pret' : 'en attente'} · ${player.connected ? 'connecte' : 'hors ligne'}</small>
+              <small>${player.ready ? 'pret' : 'en attente'} - ${player.connected ? 'connecte' : 'hors ligne'}</small>
             </div>
           `).join('') || '<div class="empty-state"><span class="pixel-mark">PC</span><p>Scannez le QR code pour rejoindre la partie.</p></div>'}
         </div>
@@ -100,7 +101,7 @@ function tableMarkup(state: PublicGameState, network: NetworkStatus): string {
         </div>
         <div class="center-stack">
           <div class="deck pile">
-            <span class="pixel-mark">PC</span>
+            <img class="game-card game-card--back pile__image" src="${getCardBackImagePath()}" alt="${getCardBackAlt()}" draggable="false" />
             <span>Pioche</span>
             <strong>${state.deckCount}</strong>
           </div>
@@ -121,23 +122,19 @@ function playerSeat(name: string, count: number, active: boolean, index: number,
   return `
     <div class="seat ${active ? 'active' : ''}" style="--angle:${angle}deg">
       <strong>${escapeHtml(name)}</strong>
-      <div class="back-cards">${Array.from({ length: Math.min(count, 7) }, (_, i) => `<span class="card-back" style="--i:${i}"></span>`).join('')}</div>
+      <div class="back-cards">${Array.from({ length: Math.min(count, 7) }, (_, i) => `<img class="game-card game-card--back card-back" src="${getCardBackImagePath()}" alt="${getCardBackAlt()}" draggable="false" style="--i:${i}" />`).join('')}</div>
       <small>${count} carte${count > 1 ? 's' : ''}</small>
     </div>
   `;
 }
 
 function cardMarkup(card?: PublicGameState['discardTop']): string {
-  if (!card) return '<div class="play-card card-ui neutral"><span class="card-label">Defausse</span><strong>-</strong></div>';
+  if (!card) return '<div class="discard-slot"><span>Defausse</span><strong>-</strong></div>';
   return `
-    <div class="play-card card-ui ${card.color} ${card.kind}">
-      <span class="card-corner card-corner--top">${cardCorner(card)}</span>
-      <span class="card-corner card-corner--bottom">${cardCorner(card)}</span>
-      <span class="card-color">${colorLabel(card.color)}</span>
-      <span class="card-icon">${cardIcon(card)}</span>
-      <strong>${cardLabel(card)}</strong>
-      <small class="card-label">${actionName(card)}</small>
-    </div>
+    <figure class="discard-card">
+      <img class="game-card game-card--image play-card" src="${getCardImagePath(card)}" alt="${getCardAlt(card)}" draggable="false" />
+      ${activeColorMarkup(card)}
+    </figure>
   `;
 }
 
@@ -181,28 +178,9 @@ function networkBadge(status: NetworkStatus): string {
   return `<span class="net ${status}"><i></i>${label}</span>`;
 }
 
-function cardCorner(card: Card): string {
-  if (card.kind === 'draw2') return '+2';
-  if (card.kind === 'skip') return 'Ø';
-  if (card.kind === 'reverse') return '↻';
-  if (card.kind === 'wild') return 'PC';
-  return String(card.value ?? '');
-}
-
-function actionName(card: Card): string {
-  if (card.kind === 'draw2') return 'Pioche 2';
-  if (card.kind === 'skip') return 'Passe';
-  if (card.kind === 'reverse') return 'Inverse';
-  if (card.kind === 'wild') return 'Au choix';
-  return 'Nombre';
-}
-
-function cardIcon(card: Card): string {
-  if (card.kind === 'draw2') return '▰▰';
-  if (card.kind === 'skip') return '⊘';
-  if (card.kind === 'reverse') return '↻';
-  if (card.kind === 'wild') return '✦';
-  return String(card.value ?? '');
+function activeColorMarkup(card: Card): string {
+  if (card.kind !== 'wild' && card.kind !== 'wildDraw4') return '';
+  return `<figcaption class="active-color">Couleur active : <strong>${colorLabel(card.color)}</strong></figcaption>`;
 }
 
 function escapeHtml(value: string): string {

@@ -1,5 +1,5 @@
 export type CardColor = 'red' | 'blue' | 'green' | 'yellow' | 'wild';
-export type CardKind = 'number' | 'draw2' | 'skip' | 'reverse' | 'wild';
+export type CardKind = 'number' | 'draw2' | 'skip' | 'reverse' | 'wild' | 'wildDraw4';
 export type Direction = 1 | -1;
 export type NetworkStatus = 'connected' | 'reconnecting' | 'disconnected' | 'local';
 
@@ -8,6 +8,7 @@ export interface Card {
   color: CardColor;
   kind: CardKind;
   value?: number;
+  imagePath?: string;
 }
 
 export interface Player {

@@ -423,25 +423,6 @@
   left: calc(var(--i) * 10px);
   width: 32px;
   height: 44px;
-  border: 1px solid rgba(245,241,230,0.16);
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, transparent 42%, rgba(0,229,255,0.34) 43% 48%, transparent 49%),
-    linear-gradient(45deg, transparent 42%, rgba(255,45,139,0.28) 43% 48%, transparent 49%),
-    #0f1218;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.38);
-}
-
-.card-back::after {
-  content: "PC";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  color: var(--cream);
-  font-family: var(--font-timer);
-  font-size: 0.48rem;
-  font-weight: 900;
-  transform: translate(-50%, -50%);
 }
 
 .center-stack {
@@ -455,19 +436,38 @@
   transform: translate(-50%, -50%);
 }
 
-.pile, .play-card {
+.pile, .play-card, .discard-slot {
   display: grid;
   place-items: center;
   width: clamp(150px, 12vw, 180px);
   height: clamp(210px, 17vw, 252px);
-  border-radius: 22px;
 }
 
 .pile {
-  background:
-    linear-gradient(135deg, transparent 42%, rgba(0,229,255,0.24) 43% 46%, transparent 47%),
-    linear-gradient(45deg, transparent 42%, rgba(255,45,139,0.22) 43% 46%, transparent 47%),
-    #0f1218;
+  position: relative;
+  gap: 2px;
+  background: transparent;
+}
+
+.pile__image,
+.play-card {
+  --card-width: clamp(150px, 12vw, 180px);
+  width: var(--card-width);
+  height: auto;
+}
+
+.pile span,
+.pile strong {
+  position: relative;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--cream);
+  background: rgba(11, 13, 17, 0.72);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .pixel-mark {
@@ -481,8 +481,21 @@
   font-family: var(--font-timer);
 }
 
-.pile strong, .play-card strong {
+.pile strong, .discard-slot strong {
   font-size: clamp(3.2rem, 6vw, 5.2rem);
+}
+
+.discard-card {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+}
+
+.discard-slot {
+  border: 1px dashed rgba(245, 241, 230, 0.18);
+  border-radius: 22px;
+  color: var(--text-soft);
+  background: rgba(11, 13, 17, 0.42);
 }
 
 .direction {
